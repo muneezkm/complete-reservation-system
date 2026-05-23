@@ -263,28 +263,38 @@ export default function CheckoutPage({
     </main>
   )
 
-  if (status === 'failed') return (
-    <main className="min-h-screen flex items-center justify-center p-8">
-      <div className="text-center max-w-md">
-        <div className="text-7xl mb-6">❌</div>
-        <h1 className="text-3xl font-bold mb-3">Payment Failed</h1>
-        <p className="text-gray-500 mb-8">
-          Your card was declined. Your reservation is still active.
-        </p>
-        <div className="flex gap-3">
-          <button onClick={cancel}
-            className="flex-1 border border-gray-300 px-6 py-3 rounded-xl
-                       hover:bg-gray-50 transition-colors">
-            Cancel Order
-          </button>
-          <button onClick={() => setShowPayment(true)}
-            className="flex-1 bg-black text-white px-6 py-3 rounded-xl
-                       hover:bg-gray-800 transition-colors">
-            Try Again
-          </button>
+ if (status === 'failed') return (
+    <>
+      {showPayment && (
+        <PaymentModal
+          amount={reservation.stock?.product?.price?.toFixed(2)}
+          onSuccess={handlePaymentSuccess}
+          onFailure={handlePaymentFailure}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
+      <main className="min-h-screen flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <div className="text-7xl mb-6">❌</div>
+          <h1 className="text-3xl font-bold mb-3">Payment Failed</h1>
+          <p className="text-gray-500 mb-8">
+            Your card was declined. Your reservation is still active.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={cancel}
+              className="flex-1 border border-gray-300 px-6 py-3 rounded-xl
+                         hover:bg-gray-50 transition-colors">
+              Cancel Order
+            </button>
+            <button onClick={() => setShowPayment(true)}
+              className="flex-1 bg-black text-white px-6 py-3 rounded-xl
+                         hover:bg-gray-800 transition-colors">
+              Try Again
+            </button>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 
   if (status === 'cancelled') return (
