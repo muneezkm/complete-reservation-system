@@ -1,29 +1,37 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
-export async function POST(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const reservation = await prisma.reservation.findUnique({
-    where: { id: params.id }
-  })
+type Props = {
+  params: Promise<{ id: string }>
+}
 
-  if (!reservation || reservation.status !== 'PENDING') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
+export async function POST(_req: Request, { params }: Props) {
+  try {
+    const { id } = await params
 
-  const released = await prisma.$transaction(async (tx) => {
-    await tx.stock.update({
+    const reservation = await prisma.reservation.findUnique({
+      where: { id }
+    })
+
+    if (!reservation || reservation.status !== 'PENDING') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    await prisma.stock.update({
       where: { id: reservation.stockId },
-      data:  { reservedUnits: { decrement: reservation.quantity } }
+      data: { reservedUnits: { decrement: reservation.quantity } }
     })
 
-    return tx.reservation.update({
-      where: { id: params.id },
-      data:  { status: 'RELEASED' }
+    const released = await prisma.reservation.update({
+      where: { id },
+      data: { status: 'RELEASED' }
     })
-  })
 
-  return NextResponse.json(released)
+    return NextResponse.json(released)
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json(
+      { error: 'Internal server error' }, { status: 500 }
+    )
+  }
 }
