@@ -70,8 +70,9 @@ function PaymentModal({
 
         {processing && (
           <div className="text-center py-12">
-            <div className="w-20 h-20 border-4 border-black border-t-transparent
-                           rounded-full animate-spin mx-auto mb-6"></div>
+            <div className="w-20 h-20 border-4 border-black
+                           border-t-transparent rounded-full animate-spin
+                           mx-auto mb-6"></div>
             <p className="text-xl font-bold mb-2">Processing Payment</p>
             <p className="text-gray-400 text-sm">
               Please do not close this page
@@ -94,14 +95,14 @@ function PaymentModal({
             </div>
             <h2 className="text-2xl font-bold mb-2">Payment Successful!</h2>
             <p className="text-gray-500 mb-2">
-              Your order has been confirmed.
+              Your payment has been approved.
             </p>
             <p className="text-gray-400 text-sm mb-8">
               Amount paid: <strong>${amount}</strong>
             </p>
             <div className="bg-green-50 border border-green-200
                            rounded-xl p-4 mb-8 text-sm text-green-700">
-              ✓ Stock permanently reserved for you
+              ✓ Payment approved by your bank
             </div>
             <button
               onClick={onSuccess}
@@ -294,12 +295,14 @@ export default function CheckoutPage({
 
   async function handlePaymentSuccess() {
     setShowPayment(false)
+    setStatus('confirming')
     setError('')
     const res = await fetch(`/api/reservations/${id}/confirm`, {
       method: 'POST'
     })
     if (res.status === 410) {
       setError('Your reservation expired during payment.')
+      setStatus('')
       return
     }
     setStatus('confirmed')
@@ -313,7 +316,8 @@ export default function CheckoutPage({
   }
 
   if (!reservation) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex items-center
+                    justify-center">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-black border-t-transparent
                         rounded-full animate-spin mx-auto mb-4"></div>
@@ -326,6 +330,25 @@ export default function CheckoutPage({
   const secs    = secondsLeft % 60
   const expired = secondsLeft === 0
   const urgent  = secondsLeft < 120 && !expired
+
+  if (status === 'confirming') return (
+    <div className="min-h-screen bg-gray-50 flex items-center
+                    justify-center p-8">
+      <div className="text-center max-w-md bg-white rounded-3xl
+                      p-10 shadow-lg">
+        <div className="w-20 h-20 border-4 border-black border-t-transparent
+                        rounded-full animate-spin mx-auto mb-6"></div>
+        <h1 className="text-2xl font-bold mb-3">Confirming Your Order</h1>
+        <p className="text-gray-400 text-sm">
+          Please wait while we confirm your payment...
+        </p>
+        <div className="mt-6 bg-gray-100 rounded-full h-2 overflow-hidden">
+          <div className="bg-black h-full rounded-full animate-pulse"
+               style={{width: '75%'}}></div>
+        </div>
+      </div>
+    </div>
+  )
 
   if (status === 'confirmed') return (
     <div className="min-h-screen bg-gray-50 flex items-center
