@@ -80,7 +80,13 @@ export default function Home() {
                 ${product.price.toFixed(2)}
               </span>
             </div>
-
+<p className="text-sm text-gray-400 mb-3">
+  Total available:{' '}
+  {product.stocks.reduce(
+    (sum: number, s: any) => sum + (s.totalUnits - s.reservedUnits), 0
+  )}{' '}
+  units across all warehouses
+</p>
             <div className="space-y-2">
               {product.stocks.map((stock: any) => {
                 const available = stock.totalUnits - stock.reservedUnits
