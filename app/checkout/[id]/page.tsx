@@ -16,6 +16,7 @@ function PaymentModal({
   const [cvv, setCvv]               = useState('')
   const [name, setName]             = useState('')
   const [processing, setProcessing] = useState(false)
+  const [paid, setPaid]             = useState(false)
   const [error, setError]           = useState('')
 
   function formatCard(val: string) {
@@ -41,9 +42,10 @@ function PaymentModal({
     const expYear  = parseInt('20' + year)
     const now      = new Date()
     if (expMonth < 1 || expMonth > 12) return 'Invalid expiry month'
-    if (expYear < now.getFullYear() ||
-      (expYear === now.getFullYear() && expMonth < now.getMonth() + 1))
-      return 'Your card has expired'
+    if (
+      expYear < now.getFullYear() ||
+      (expYear === now.getFullYear() && expMonth < now.getMonth() + 1)
+    ) return 'Your card has expired'
     if (cvv.length !== 3) return `CVV must be 3 digits (you entered ${cvv.length})`
     return null
   }
@@ -58,14 +60,15 @@ function PaymentModal({
     setProcessing(true)
     await new Promise(r => setTimeout(r, 3000))
     setProcessing(false)
-    onSuccess()
+    setPaid(true)
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70
                     flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-        {processing ? (
+
+        {processing && (
           <div className="text-center py-12">
             <div className="w-20 h-20 border-4 border-black border-t-transparent
                            rounded-full animate-spin mx-auto mb-6"></div>
@@ -81,7 +84,36 @@ function PaymentModal({
               Contacting your bank...
             </p>
           </div>
-        ) : (
+        )}
+
+        {paid && !processing && (
+          <div className="text-center py-8">
+            <div className="w-24 h-24 bg-green-100 rounded-full flex
+                            items-center justify-center mx-auto mb-6">
+              <span className="text-5xl">✓</span>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Payment Successful!</h2>
+            <p className="text-gray-500 mb-2">
+              Your order has been confirmed.
+            </p>
+            <p className="text-gray-400 text-sm mb-8">
+              Amount paid: <strong>${amount}</strong>
+            </p>
+            <div className="bg-green-50 border border-green-200
+                           rounded-xl p-4 mb-8 text-sm text-green-700">
+              ✓ Stock permanently reserved for you
+            </div>
+            <button
+              onClick={onSuccess}
+              className="w-full bg-black text-white py-4 rounded-xl
+                         font-bold hover:bg-gray-800 transition-colors"
+            >
+              View Order Confirmation
+            </button>
+          </div>
+        )}
+
+        {!processing && !paid && (
           <>
             <div className="flex justify-between items-center mb-8">
               <div>
@@ -281,8 +313,7 @@ export default function CheckoutPage({
   }
 
   if (!reservation) return (
-    <div className="min-h-screen flex items-center justify-center
-                    bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-black border-t-transparent
                         rounded-full animate-spin mx-auto mb-4"></div>
@@ -305,9 +336,9 @@ export default function CheckoutPage({
                         items-center justify-center mx-auto mb-6">
           <span className="text-4xl">✓</span>
         </div>
-        <h1 className="text-3xl font-bold mb-3">Payment Successful!</h1>
+        <h1 className="text-3xl font-bold mb-3">Order Confirmed!</h1>
         <p className="text-gray-500 mb-6">
-          Your order has been confirmed.
+          Your payment was successful.
         </p>
         <div className="bg-gray-50 rounded-2xl p-5 mb-8 text-left">
           <div className="flex justify-between mb-2">
@@ -373,11 +404,11 @@ export default function CheckoutPage({
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-lg mx-auto p-6">
 
-          {/* Header */}
           <div className="flex items-center gap-3 mb-8 pt-4">
             <button onClick={() => router.push('/')}
               className="w-10 h-10 bg-white rounded-full flex items-center
-                         justify-center shadow-sm hover:shadow-md transition-shadow">
+                         justify-center shadow-sm hover:shadow-md
+                         transition-shadow text-lg">
               ←
             </button>
             <h1 className="text-xl font-bold">Checkout</h1>
@@ -390,7 +421,6 @@ export default function CheckoutPage({
             </div>
           )}
 
-          {/* Timer */}
           <div className={`rounded-2xl p-6 mb-6 text-center ${
             expired
               ? 'bg-red-500 text-white'
@@ -417,7 +447,6 @@ export default function CheckoutPage({
             )}
           </div>
 
-          {/* Order Details */}
           <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
             <h2 className="font-bold text-lg mb-5">Order Summary</h2>
 
@@ -445,7 +474,9 @@ export default function CheckoutPage({
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-gray-500">
                 <span>Subtotal</span>
-                <span>${reservation.stock?.product?.price?.toFixed(2)}</span>
+                <span>
+                  ${reservation.stock?.product?.price?.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between text-gray-500">
                 <span>Shipping</span>
@@ -454,12 +485,13 @@ export default function CheckoutPage({
               <div className="flex justify-between font-bold text-base
                               pt-3 border-t">
                 <span>Total</span>
-                <span>${reservation.stock?.product?.price?.toFixed(2)}</span>
+                <span>
+                  ${reservation.stock?.product?.price?.toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3">
             <button
               onClick={cancel}
@@ -472,8 +504,8 @@ export default function CheckoutPage({
             <button
               onClick={() => setShowPayment(true)}
               disabled={expired}
-              className="flex-2 flex-grow-[2] bg-black text-white py-4
-                         rounded-xl font-bold disabled:opacity-40
+              className="flex-1 bg-black text-white py-4 rounded-xl
+                         font-bold disabled:opacity-40
                          disabled:cursor-not-allowed hover:bg-gray-800
                          transition-colors"
             >
